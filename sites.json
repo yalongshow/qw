@@ -1,0 +1,42 @@
+{
+  "version": "1.0",
+  "theme": "dark",
+  "categories": [
+    {"id": "common", "name": "常用", "icon": "⭐"},
+    {"id": "tech", "name": "技术", "icon": "💻"},
+    {"id": "social", "name": "社交", "icon": "💬"}
+  ],
+  "sites": [
+    {"name": "百度", "url": "https://baidu.com", "icon": "🔍", "category": "common"},
+    {"name": "百3度", "url": "https://baidu.com", "icon": "🔍", "category": "common"},
+    {"name": "Google", "url": "https://google.com", "icon": "🌐", "category": "common"},
+    {"name": "必应", "url": "https://bing.com", "icon": "🌻", "category": "common"},
+    {"name": "搜狗", "url": "https://sogou.com", "icon": "🐶", "category": "common"},
+    {"name": "360搜索", "url": "https://so.com", "icon": "🔎", "category": "common"},
+    {"name": "今日头条", "url": "https://toutiao.com", "icon": "📰", "category": "common"},
+    {"name": "腾讯新闻", "url": "https://news.qq.com", "icon": "📢", "category": "common"},
+    {"name": "网易新闻", "url": "https://news.163.com", "icon": "📱", "category": "common"},
+    {"name": "天气预报", "url": "https://weather.com.cn", "icon": "☀️", "category": "common"},
+    {"name": "快递查询", "url": "https://www.kuaidi100.com", "icon": "📦", "category": "common"},
+    {"name": "GitHub", "url": "https://github.com", "icon": "🐙", "category": "tech"},
+    {"name": "Stack Overflow", "url": "https://stackoverflow.com", "icon": "📚", "category": "tech"},
+    {"name": "MDN", "url": "https://developer.mozilla.org", "icon": "🦊", "category": "tech"},
+    {"name": "Vite", "url": "https://vitejs.dev", "icon": "⚡", "category": "tech"},
+    {"name": "React", "url": "https://react.dev", "icon": "⚛️", "category": "tech"},
+    {"name": "Vue", "url": "https://vuejs.org", "icon": "💚", "category": "tech"},
+    {"name": "npm", "url": "https://npmjs.com", "icon": "📦", "category": "tech"},
+    {"name": "Docker Hub", "url": "https://hub.docker.com", "icon": "🐳", "category": "tech"},
+    {"name": "ChatGPT", "url": "https://chat.openai.com", "icon": "🤖", "category": "tech"},
+    {"name": "Cloudflare", "url": "https://dash.cloudflare.com", "icon": "☁️", "category": "tech"},
+    {"name": "知乎", "url": "https://zhihu.com", "icon": "💭", "category": "social"},
+    {"name": "微博", "url": "https://weibo.com", "icon": "📝", "category": "social"},
+    {"name": "微信", "url": "https://weixin.qq.com", "icon": "💬", "category": "social"},
+    {"name": "小红书", "url": "https://xiaohongshu.com", "icon": "📕", "category": "social"},
+    {"name": "Bilibili", "url": "https://bilibili.com", "icon": "📺", "category": "social"},
+    {"name": "抖音", "url": "https://douyin.com", "icon": "🎵", "category": "social"},
+    {"name": "豆瓣", "url": "https://douban.com", "icon": "🎬", "category": "social"},
+    {"name": "贴吧", "url": "https://tieba.baidu.com", "icon": "�️", "category": "social"},
+    {"name": "Twitter/X", "url": "https://twitter.com", "icon": "🐦", "category": "social"},
+    {"name": "Reddit", "url": "https://reddit.com", "icon": "🤭", "category": "social"}
+  ]
+}

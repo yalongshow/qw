@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>导航</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{--bg:#0d1117;--card-bg:#161b22;--card-hover:#21262d;--text:#c9d1d9;--text-muted:#8b949e;--border:#30363d;--accent:#58a6ff}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:12px;padding-bottom:50px}
+    .header{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+    .search{flex:1;background:var(--card-bg);border:1px solid var(--border);border-radius:6px;padding:8px 12px;color:var(--text);font-size:14px;outline:none}
+    .search:focus{border-color:var(--accent)}
+    .btn{background:var(--card-bg);border:1px solid var(--border);border-radius:6px;padding:8px 14px;color:var(--text);font-size:13px;cursor:pointer;transition:all .15s}
+    .btn:hover{background:var(--card-hover);border-color:var(--accent)}
+    .btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
+    .btn-primary:hover{background:#79b8ff}
+    .btn-danger{color:#f85149}
+    .btn-danger:hover{background:rgba(248,81,73,.15);border-color:#f85149}
+    .category{margin-bottom:20px}
+    .category-title{font-size:12px;color:var(--text-muted);margin-bottom:8px;padding-left:2px}
+    .sites-grid{display:flex;flex-wrap:wrap;gap:8px}
+    .site-card{background:var(--card-bg);border:1px solid var(--border);border-radius:6px;padding:8px 12px;text-decoration:none;color:var(--text);transition:all .15s;display:flex;align-items:center;gap:8px;position:relative}
+    .site-card:hover{background:var(--card-hover);border-color:var(--accent)}
+    .site-icon{font-size:16px;flex-shrink:0}
+    .site-name{font-size:13px;white-space:nowrap}
+    .site-actions{position:absolute;top:-8px;right:-8px;display:none;gap:2px}
+    .site-card:hover .site-actions{display:flex}
+    .site-actions button{width:18px;height:18px;border:none;background:var(--bg);border-radius:4px;cursor:pointer;font-size:9px;display:flex;align-items:center;justify-content:center;opacity:.7}
+    .site-actions button:hover{opacity:1}
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:1000}
+    .modal-overlay.active{display:flex}
+    .modal{background:var(--card-bg);border:1px solid var(--border);border-radius:10px;padding:20px;width:320px}
+    .modal h3{font-size:15px;margin-bottom:16px}
+    .form-group{margin-bottom:12px}
+    .form-group label{display:block;font-size:12px;color:var(--text-muted);margin-bottom:4px}
+    .form-group input,.form-group select{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;color:var(--text);font-size:13px;outline:none}
+    .form-group input:focus,.form-group select:focus{border-color:var(--accent)}
+    .modal-actions{display:flex;gap:8px;margin-top:16px}
+    .modal-actions .btn{flex:1}
+    .footer{position:fixed;bottom:0;left:0;right:0;padding:12px;background:var(--bg);border-top:1px solid var(--border);display:flex;justify-content:center;gap:8px;z-index:999}
+    .empty{text-align:center;padding:40px;color:var(--text-muted);font-size:13px}
+    .hidden{display:none}
+  </style>
+</head>
+<body>
+  <div class="header">
+    <input type="text" class="search" id="searchInput" placeholder="搜索...">
+    <button class="btn btn-primary" onclick="openAddModal()">+ 添加</button>
+  </div>
+  <div id="content"></div>
+
+  <div class="footer">
+    <button class="btn" onclick="importJson()">📂 导入JSON</button>
+    <button class="btn" onclick="exportJson()">💾 导出JSON</button>
+    <button class="btn" onclick="exportHtml()">📦 导出HTML</button>
+    <button class="btn btn-danger" onclick="resetData()">🔄 重置</button>
+  </div>
+
+  <input type="file" id="fileInput" accept=".json" class="hidden">
+
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <h3 id="modalTitle">添加网址</h3>
+      <div class="form-group">
+        <label>名称</label>
+        <input type="text" id="siteName" placeholder="百度">
+      </div>
+      <div class="form-group">
+        <label>网址</label>
+        <input type="url" id="siteUrl" placeholder="https://baidu.com">
+      </div>
+      <div class="form-group">
+        <label>图标 (emoji)</label>
+        <input type="text" id="siteIcon" placeholder="🔍">
+      </div>
+      <div class="form-group">
+        <label>分类</label>
+        <select id="siteCategory"></select>
+      </div>
+      <div class="modal-actions">
+        <button class="btn" onclick="closeModal()">取消</button>
+        <button class="btn btn-primary" onclick="saveSite()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+let data={categories:[],sites:[]};
+let editingIndex=-1;
+let loadedFromJson=false;
+
+async function loadData(){
+  // 1. 优先读取 localStorage
+  const saved=localStorage.getItem('navData');
+  if(saved){
+    try{
+      data=JSON.parse(saved);
+      loadedFromJson=false;
+      render();
+      return;
+    }catch(e){}
+  }
+
+  // 2. 尝试读取 sites.json
+  try{
+    const res=await fetch('sites.json');
+    if(res.ok){
+      data=await res.json();
+      loadedFromJson=true;
+      localStorage.setItem('navData',JSON.stringify(data));
+      render();
+      return;
+    }
+  }catch(e){}
+
+  // 3. 都没有则显示空
+  data={categories:[],sites:[]};
+  render();
+}
+
+function saveData(){
+  localStorage.setItem('navData',JSON.stringify(data));
+  loadedFromJson=false;
+  render();
+}
+
+function render(){
+  const search=document.getElementById('searchInput').value.toLowerCase();
+  const container=document.getElementById('content');
+  const select=document.getElementById('siteCategory');
+  select.innerHTML=data.categories.map(c=>`<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
+  const filtered=data.sites.filter(s=>s.name.toLowerCase().includes(search)||s.url.toLowerCase().includes(search));
+
+  if(filtered.length===0&&data.sites.length===0){
+    container.innerHTML='<div class="empty">暂无数据<br><br>点击"导入JSON"加载数据<br>或点击"+ 添加"新建</div>';
+    return;
+  }
+
+  const groups={};
+  data.categories.forEach(c=>groups[c.id]={cat:c,sites:[]});
+  filtered.forEach(site=>{
+    const realIndex=data.sites.indexOf(site);
+    if(groups[site.category])groups[site.category].sites.push({...site,realIndex});
+  });
+
+  let html='';
+  Object.values(groups).filter(g=>g.sites.length>0).forEach(g=>{
+    html+=`<div class="category"><div class="category-title">${g.cat.icon} ${g.cat.name}</div><div class="sites-grid">`;
+    g.sites.forEach(s=>{
+      html+=`<a href="${s.url}" class="site-card" target="_blank"><div class="site-actions"><button onclick="event.preventDefault();editSite(${s.realIndex})">✏</button><button class="btn-danger" onclick="event.preventDefault();deleteSite(${s.realIndex})">×</button></div><span class="site-icon">${s.icon}</span><span class="site-name">${s.name}</span></a>`;
+    });
+    html+='</div></div>';
+  });
+
+  if(!html)html='<div class="empty">无匹配结果</div>';
+  container.innerHTML=html;
+}
+
+function openAddModal(){
+  if(data.categories.length===0){
+    alert('请先导入JSON或添加分类');
+    return;
+  }
+  editingIndex=-1;
+  document.getElementById('modalTitle').textContent='添加网址';
+  document.getElementById('siteName').value='';
+  document.getElementById('siteUrl').value='';
+  document.getElementById('siteIcon').value='';
+  document.getElementById('modalOverlay').classList.add('active');
+  document.getElementById('siteName').focus();
+}
+
+function editSite(index){
+  const site=data.sites[index];
+  editingIndex=index;
+  document.getElementById('modalTitle').textContent='编辑网址';
+  document.getElementById('siteName').value=site.name;
+  document.getElementById('siteUrl').value=site.url;
+  document.getElementById('siteIcon').value=site.icon;
+  document.getElementById('siteCategory').value=site.category;
+  document.getElementById('modalOverlay').classList.add('active');
+}
+
+function deleteSite(index){
+  if(confirm('确定删除？')){data.sites.splice(index,1);saveData()}
+}
+
+function closeModal(){
+  document.getElementById('modalOverlay').classList.remove('active');
+}
+
+function saveSite(){
+  const name=document.getElementById('siteName').value.trim();
+  const url=document.getElementById('siteUrl').value.trim();
+  const icon=document.getElementById('siteIcon').value.trim()||'📌';
+  const category=document.getElementById('siteCategory').value;
+  if(!name||!url){alert('请填写名称和网址');return}
+  if(!url.startsWith('http'))url='https://'+url;
+  const site={name,url,icon,category};
+  if(editingIndex>=0){data.sites[editingIndex]=site}else{data.sites.push(site)}
+  saveData();closeModal();
+}
+
+function importJson(){
+  document.getElementById('fileInput').click();
+}
+
+document.getElementById('fileInput').addEventListener('change',function(e){
+  const file=e.target.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      const json=JSON.parse(ev.target.result);
+      if(!json.categories||!json.sites){
+        alert('JSON格式错误，需要包含categories和sites');
+        return;
+      }
+      data=json;
+      localStorage.setItem('navData',JSON.stringify(data));
+      loadedFromJson=true;
+      render();
+      alert('导入成功');
+    }catch(err){
+      alert('解析JSON失败');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value='';
+});
+
+function exportJson(){
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='sites.json';
+  a.click();
+}
+
+function exportHtml(){
+  const styles=`
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root { --bg: #0d1117; --card-bg: #161b22; --card-hover: #21262d; --text: #c9d1d9; --text-muted: #8b949e; --border: #30363d; --accent: #58a6ff; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 12px; }
+.header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.search { flex: 1; background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; color: var(--text); font-size: 14px; outline: none; }
+.search:focus { border-color: var(--accent); }
+.category { margin-bottom: 20px; }
+.category-title { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; padding-left: 2px; }
+.sites-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.site-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; text-decoration: none; color: var(--text); transition: all .15s; display: flex; align-items: center; gap: 8px; }
+.site-card:hover { background: var(--card-hover); border-color: var(--accent); }
+.site-icon { font-size: 16px; }
+.site-name { font-size: 13px; white-space: nowrap; }
+`;
+
+  const js=`const data=${JSON.stringify(data)};
+function render(){
+  const search=(document.getElementById('searchInput').value||'').toLowerCase();
+  const groups={};
+  data.categories.forEach(c=>groups[c.id]={cat:c,sites:[]});
+  data.sites.filter(s=>s.name.toLowerCase().includes(search)||s.url.toLowerCase().includes(search)).forEach(s=>{if(groups[s.category])groups[s.category].sites.push(s)});
+  let html='';
+  Object.values(groups).filter(g=>g.sites.length>0).forEach(g=>{
+    html+='<div class="category"><div class="category-title">'+g.cat.icon+' '+g.cat.name+'</div><div class="sites-grid">';
+    g.sites.forEach(s=>{html+='<a href="'+s.url+'" class="site-card" target="_blank"><span class="site-icon">'+s.icon+'</span><span class="site-name">'+s.name+'</span></a>'});
+    html+='</div></div>';
+  });
+  document.getElementById('content').innerHTML=html||'';
+}
+render();
+document.getElementById('searchInput').addEventListener('input',render);`;
+
+  const html=`<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>导航</title>
+  <style>${styles}</style>
+</head>
+<body>
+  <div class="header"><input type="text" class="search" id="searchInput" placeholder="搜索..."></div>
+  <div id="content"></div>
+  <script>${js}<\/script>
+</body>
+</html>`;
+
+  const blob=new Blob([html],{type:'text/html'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='my-nav.html';
+  a.click();
+}
+
+function resetData(){
+  if(!confirm('确定重置？将清除浏览器缓存，从JSON文件重新加载数据。'))return;
+  localStorage.removeItem('navData');
+  loadedFromJson=true;
+  loadData();
+}
+
+document.getElementById('searchInput').addEventListener('input',render);
+document.getElementById('modalOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal()});
+loadData();
+  </script>
+</body>
+</html>

@@ -17,6 +17,8 @@
     {"name": "腾讯新闻", "url": "https://news.qq.com", "icon": "📢", "category": "common"},
     {"name": "网易新闻", "url": "https://news.163.com", "icon": "📱", "category": "common"},
     {"name": "天气预报", "url": "https://weather.com.cn", "icon": "☀️", "category": "common"},
+    {"name": "简易HT", "url": "https://yalongshow.github.io/qw/static-interaction-test.html", "icon": "📦", "category": "common"},
+    {"name": "快递查询", "url": "https://www.kuaidi100.com", "icon": "📦", "category": "common"},
     {"name": "快递查询", "url": "https://www.kuaidi100.com", "icon": "📦", "category": "common"},
     {"name": "GitHub", "url": "https://github.com", "icon": "🐙", "category": "tech"},
     {"name": "Stack Overflow", "url": "https://stackoverflow.com", "icon": "📚", "category": "tech"},
